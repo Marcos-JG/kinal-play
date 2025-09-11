@@ -1,9 +1,11 @@
 package org.algorix.kinal_play.web.mapper;
+import org.algorix.kinal_play.dominio.dto.ModPeliculaDto;
 import org.algorix.kinal_play.dominio.dto.PeliculaDto;
 import org.algorix.kinal_play.persistence.entity.PeliculaEntity;
 import org.mapstruct.InheritInverseConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
@@ -23,5 +25,13 @@ public interface PeliculaMapper {
     @InheritInverseConfiguration
     @Mapping(source = "genre", target = "genero", qualifiedByName = "generarGenero")
     PeliculaEntity toEntity(PeliculaDto peliculaDto);
+
+    //Auto actualizar el ModPeliculasDto a PeliculaEntity
+    @Mapping(source = "name",target = "nombre")
+    @Mapping(source = "releaseDate",target = "fechaEstreno")
+    @Mapping(source = "rating",target = "calificacion")
+    void modificarEntityFromDto(ModPeliculaDto modPeliculaDto,@MappingTarget PeliculaEntity peliculaEntity);
+
+
 
 }

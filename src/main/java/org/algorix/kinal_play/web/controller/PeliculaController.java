@@ -1,15 +1,22 @@
 package org.algorix.kinal_play.web.controller;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.algorix.kinal_play.dominio.dto.ModPeliculaDto;
 import org.algorix.kinal_play.dominio.dto.PeliculaDto;
 import org.algorix.kinal_play.dominio.service.PeliculaService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/peliculas/v1")
+@RequestMapping("v1/peliculas")
+@Tag(name = "Peliculas", description = "Operaciones (CRUD) sobre las peliculas de Kinal Play")
 public class PeliculaController {
     private final PeliculaService  peliculaService;
 
@@ -28,7 +35,18 @@ public class PeliculaController {
     }
 
     @GetMapping("{codigo}")
-    public ResponseEntity<PeliculaDto> obtenerPeliculaPorCodigo(@PathVariable Long codigo){
+    @Operation(
+            summary = "Obtener una pelicula a partir de su identificador",
+            description = "Retorna la pelicula que coincide con el identificador proporcionado",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Pelicula encontrada con exito"),
+                    @ApiResponse(responseCode = "400", description = "Pelicula no encontrada",
+                            content = @Content)
+            }
+    )
+    public ResponseEntity<PeliculaDto> obtenerPeliculaPorCodigo(
+            @Parameter(description = "Identificador de la pelicula a recuperar",example = "5")
+            @PathVariable Long codigo){
         //return this.peliculaService.obtenerPeliculaPorCodigo(codigo);
         return ResponseEntity.ok(this.peliculaService.obtenerPeliculaPorCodigo(codigo));
     }
@@ -39,12 +57,17 @@ public class PeliculaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.peliculaService.guardarPelicula(peliculaDto));
     }
     //modificar pelicula
-    @PutMapping
-    public ResponseEntity<PeliculaDto> modificarPelicula(@PathVariable Long codigo, @RequestBody PeliculaDto peliculaDto){
-        return ResponseEntity.ok().build();
+    @PutMapping("{codigo}")
+    public ResponseEntity<PeliculaDto> modificarPelicula
+        (@PathVariable Long codigo, @RequestBody @Valid ModPeliculaDto modpeliculaDto){
+        return ResponseEntity.ok(this.peliculaService.modficarPelicula(codigo,modpeliculaDto));
     }
     //eliminar pelicula
-
+    @DeleteMapping("{codigo}")
+    public ResponseEntity<PeliculaDto> eliminarPelicula(@PathVariable Long codigo){
+        this.peliculaService.eliminarPelicula(codigo);
+        return ResponseEntity.ok().build();
+    }
     //exception - peliculaNoExiste - PeliculaYaExiste
 
     //Consulta a la IA
@@ -52,4 +75,5 @@ public class PeliculaController {
     //Validaciones (dependencias)
 
     //Documentación (dependencias)
-}
+
+    }

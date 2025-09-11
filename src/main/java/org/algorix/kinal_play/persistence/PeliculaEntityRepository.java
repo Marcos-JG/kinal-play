@@ -2,6 +2,8 @@ package org.algorix.kinal_play.persistence;
 import lombok.Data;
 import org.algorix.kinal_play.dominio.dto.ModPeliculaDto;
 import org.algorix.kinal_play.dominio.dto.PeliculaDto;
+import org.algorix.kinal_play.dominio.exception.PeliculaNoExisteExpection;
+import org.algorix.kinal_play.dominio.exception.PeliculaYaExisteException;
 import org.algorix.kinal_play.dominio.repository.PeliculaRepository;
 import org.algorix.kinal_play.persistence.crud.CrudPeliculaEntity;
 import org.algorix.kinal_play.persistence.entity.PeliculaEntity;
@@ -31,29 +33,44 @@ public class PeliculaEntityRepository implements PeliculaRepository {
 
     @Override
     public PeliculaDto obtenerPeliculaPorCodigo(Long codigo) {
-        return this.peliculaMapper.toDto(this.crudPelicula.findById(codigo).orElse(null));
-    }
+        PeliculaEntity peliculaEntity = this.crudPelicula.findById(codigo).orElse(null);
+        if (peliculaEntity == null)  throw new PeliculaNoExisteExpection(codigo);{
+        }
+            return this.peliculaMapper.toDto(this.crudPelicula.findById(codigo).orElse(null));
+        }
+
+
 
     @Override
     public PeliculaDto guardarPelicula(PeliculaDto peliculaDto) {
-        //instanciar clase de entidad
-        PeliculaEntity pelicula = new PeliculaEntity();
-        //convertir dto a entidad
-        pelicula = this.peliculaMapper.toEntity(peliculaDto);
+        if (this.crudPelicula.findFirstByNombre(peliculaDto.name()) != null) {
+            throw new PeliculaYaExisteException(peliculaDto.name());
+        }
+        PeliculaEntity pelicula = this.peliculaMapper.toEntity(peliculaDto);
         pelicula.setEstado("D");
-        //guardar en la DB con JPA
         this.crudPelicula.save(pelicula);
-        //Retornar el valor guardado como DTO
         return this.peliculaMapper.toDto(pelicula);
     }
-
     @Override
     public PeliculaDto modificarPelicula(Long codigo, ModPeliculaDto modPeliculaDto) {
         PeliculaEntity pelicula = this.crudPelicula.findById(codigo).orElse(null);
-        pelicula.setNombre(modPeliculaDto.name());
-        pelicula.setFechaEstreno(modPeliculaDto.releaseDate());
-        pelicula.setCalificacion(BigDecimal.valueOf(modPeliculaDto.rating()));
-        this.crudPelicula.save(pelicula);
-        return this.peliculaMapper.toDto(pelicula);
+//        pelicula.setNombre(modPeliculaDto.name());
+//        pelicula.setFechaEstreno(modPeliculaDto.releaseDate());
+//        pelicula.setCalificacion(BigDecimal.valueOf(modPeliculaDto.rating()));
+//        this.crudPelicula.save(pelicula);
+//        return this.peliculaMapper.toDto(pelicula);
+        this.peliculaMapper.modificarEntityFromDto(modPeliculaDto, pelicula);
+        return this.peliculaMapper.toDto(this.crudPelicula.save(pelicula));
+    }
+
+    @Override
+    public void eliminarPelicula(Long codigo) {
+        PeliculaEntity peliculaEntity = this.crudPelicula.findById(codigo).orElse(null);
+       if (peliculaEntity == null) {
+           //excepcion
+           throw new PeliculaNoExisteExpection(codigo);
+       }else{
+           this.crudPelicula.deleteById(codigo);
+       }
     }
 }
